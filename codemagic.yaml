@@ -1,0 +1,44 @@
+workflows:
+  tvos-sideload:
+    name: CloudNow tvOS Sideload Build
+    max_build_duration: 60
+    instance_type: mac_mini_m2
+    environment:
+      xcode: latest
+      vars:
+        XCODE_PROJECT: "CloudNow.xcodeproj"
+        XCODE_SCHEME: "CloudNow"
+        BUNDLE_ID: "com.yourname.cloudnow"  # <-- change this to something unique
+
+    scripts:
+      - name: Resolve Swift Package dependencies
+        script: |
+          xcodebuild -resolvePackageDependencies \
+            -project "$CM_BUILD_DIR/$XCODE_PROJECT" \
+            -scheme "$XCODE_SCHEME"
+
+      - name: Build unsigned IPA (development)
+        script: |
+          xcodebuild archive \
+            -project "$CM_BUILD_DIR/$XCODE_PROJECT" \
+            -scheme "$XCODE_SCHEME" \
+            -sdk appletvos \
+            -destination "generic/platform=tvOS" \
+            -archivePath "$CM_BUILD_DIR/build/CloudNow.xcarchive" \
+            CODE_SIGN_IDENTITY="" \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGNING_ALLOWED=NO \
+            PRODUCT_BUNDLE_IDENTIFIER="$BUNDLE_ID" \
+            | xcpretty
+
+      - name: Package IPA from archive
+        script: |
+          mkdir -p "$CM_BUILD_DIR/build/ipa"
+          cd "$CM_BUILD_DIR/build/CloudNow.xcarchive/Products/Applications"
+          mkdir -p Payload
+          cp -r CloudNow.app Payload/
+          zip -r "$CM_BUILD_DIR/build/ipa/CloudNow.ipa" Payload
+
+    artifacts:
+      - build/ipa/*.ipa
+      - /tmp/xcodebuild_logs/*.log
