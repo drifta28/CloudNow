@@ -8,7 +8,7 @@ workflows:
       vars:
         XCODE_PROJECT: "CloudNow.xcodeproj"
         XCODE_SCHEME: "CloudNow"
-        BUNDLE_ID: "com.yourname.cloudnow"  # <-- change this to something unique
+        BUNDLE_ID: "com.drift28.cloudnow"  # <-- change this to something unique
 
     scripts:
       - name: Resolve Swift Package dependencies
